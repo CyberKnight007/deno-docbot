@@ -97,12 +97,25 @@ export interface NodeClassDef {
   isAbstract: boolean
   constructors: NodeClassConstructorDef[]
   properties: NodeProperty[]
+  methods: NodeClassMethodsDef[]
   //extends: TsType | null
   extends: string | null
   indexSignatures: any[]
   implements: string[]
   typeParams: NodeParam[]
   superTypeParams: NodeParam[]
+}
+
+export interface NodeClassMethodsDef {
+  jsDoc: string | null
+  accessibility: any
+  optional: boolean
+  isAbstract: boolean
+  isStatic: boolean
+  name: string
+  kind: string
+  functionDef: NodeFunctionDef
+  location: NodeLocation
 }
 
 export interface NodeFunctionDef {
@@ -148,6 +161,7 @@ export interface DocNode {
   classDef?: NodeClassDef
   interfaceDef?: NodeInterfaceDef
   functionDef?: NodeFunctionDef
+  enumDef?: NodeEnumDef
   typeAliasDef?: NodeTypeAliasDef
   importDef?: NodeImportDef
 }

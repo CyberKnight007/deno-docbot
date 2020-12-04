@@ -1,6 +1,10 @@
 import { Command, CommandContext, Embed } from '../../deps.ts'
 import { getNode, NodeEmoji, NodeEmojiURL } from '../util/docs.ts'
-import { config } from '../../config.ts'
+
+// had to make it becuse then i would have had to change a lot of stuff ;-;
+const config = {
+  module: 'https/raw.githubusercontent.com/harmony-org/harmony/main/mod.ts',
+}
 
 export default class GetDocCommand extends Command {
   name = 'Get'
@@ -16,7 +20,12 @@ export default class GetDocCommand extends Command {
 
     const embed = new Embed()
       .setTitle(`${node.name} (${node.kind})`)
-      .setURL(`https://doc.deno.land/${node.location.filename}`)
+      .setURL(
+        `https://doc.deno.land/${node.location.filename.replace(
+          'https://',
+          'https/'
+        )}`
+      )
       .setColor(0x0dbc6a)
 
     if (node.jsDoc != null) embed.setDescription(node.jsDoc)
@@ -55,6 +64,23 @@ export default class GetDocCommand extends Command {
         }
       }
     }
+
+    // Check if the input is a enum
+    else if (node.enumDef !== undefined) {
+      const def = node.enumDef
+      const proptxt = def['members']
+        .map((member) => `• ${member['name']}`)
+        .join('\n')
+      const leftover = proptxt.length > 1000
+      if (leftover) {
+        const bulletIndex = proptxt.substring(0, 1000).lastIndexOf('•') - 1
+        embed.addField('Members', proptxt.substring(0, bulletIndex))
+        embed.addField('\u200b', proptxt.substring(bulletIndex, 2000))
+      } else {
+        embed.addField('Members', proptxt.substring(0, 1000))
+      }
+    }
+
     // Check if the input is a Class
     else if (node.classDef !== undefined) {
       const def = node.classDef
@@ -64,10 +90,10 @@ export default class GetDocCommand extends Command {
       if (def.constructors.length) {
         console.log(def.constructors[0].params)
         const proptxt = def.constructors[0].params
-          .map((prop) =>
-            prop.left
+          .map((prop) => {
+            return prop.left
               ? `• **${prop.left.name}:** ${
-                  `[${prop.left.tsType?.repr}](https;//doc.deno.land/${config.module}#${prop.left.tsType?.repr})` ||
+                  `[${prop.left.tsType?.repr}](https://doc.deno.land/${config.module}#${prop.left.tsType?.repr})` ||
                   `[${prop.left.tsType?.keyword}](https://doc.deno.land/${config.module}#${prop.left.tsType?.keyword})` ||
                   prop.left.tsType?.union
                     ?.map(
@@ -100,7 +126,7 @@ export default class GetDocCommand extends Command {
                     ? ` - ${def.constructors[0].jsDoc}`
                     : ''
                 }`
-          )
+          })
           .join('\n')
 
         const leftover = proptxt.length > 1000
@@ -131,14 +157,35 @@ export default class GetDocCommand extends Command {
         const leftover = proptxt.length > 1000
         if (leftover) {
           const bulletIndex = proptxt.substring(0, 1000).lastIndexOf('•') - 1
-          embed.addField('Constructor', proptxt.substring(0, bulletIndex))
+          embed.addField('Properties', proptxt.substring(0, bulletIndex))
           embed.addField('\u200b', proptxt.substring(bulletIndex, 2000))
         } else {
-          embed.addField('Constructor', proptxt.substring(0, 1000))
+          embed.addField('Properties', proptxt.substring(0, 1000))
         }
       }
 
-      ctx.channel.send(embed)
+      if (def.methods.length) {
+        const proptxt = def.methods
+          .map(
+            (prop) =>
+              `• **${prop.name}${prop.optional ? '?' : ''}:** ${
+                prop.jsDoc != null ? ` - ${prop.jsDoc}` : ''
+              }`
+          )
+          .join('\n')
+
+        const leftover = proptxt.length > 1000
+        if (leftover) {
+          const bulletIndex = proptxt.substring(0, 1000).lastIndexOf('•') - 1
+          embed.addField('Methods', proptxt.substring(0, bulletIndex))
+          embed.addField('\u200b', proptxt.substring(bulletIndex, 2000))
+        } else {
+          embed.addField('Methods', proptxt.substring(0, 1000))
+        }
+      }
+
     }
+    
+    ctx.channel.send(embed)
   }
 }
