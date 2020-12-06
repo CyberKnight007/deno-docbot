@@ -62,6 +62,14 @@ export interface TsType {
   typeRef?: TsTypeRef
   keyword?: string
   union: TsType[]
+  array: TsTypeArrayDef
+  fnOrConstructor: NodeFnOrConstructor
+}
+
+export interface TsTypeArrayDef {
+  repr: string
+  kind: string
+  keyword: string
 }
 
 export interface NodeParam {
@@ -91,6 +99,14 @@ export interface NodeProperty {
   isStatic: boolean
   name: string
   location: NodeLocation
+  fnOrConstructor?: NodeFnOrConstructor
+}
+
+export interface NodeFnOrConstructor {
+  constructor: boolean
+  tsType: TsType
+  params: NodeParam[]
+  typeParams: NodeParam[]
 }
 
 export interface NodeClassDef {

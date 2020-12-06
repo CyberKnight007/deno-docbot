@@ -43,13 +43,52 @@ export default class GetDocCommand extends Command {
           .map(
             (prop) =>
               `• **${prop.name}${prop.optional ? '?' : ''}:** ${
-                prop.tsType?.repr ||
-                prop.tsType?.keyword ||
-                prop.tsType?.union
-                  ?.map((t) => t.repr || t.keyword)
-                  .join(' | ') ||
-                prop.tsType?.typeRef?.typeName ||
-                'unknown'
+                prop.tsType?.fnOrConstructor
+                  ? `(${prop.tsType?.fnOrConstructor?.params.map(
+                      (prop) =>
+                        `${prop.name}${prop.optional ? '?' : ''}: ${
+                          (prop.tsType?.array.repr
+                            ? prop.tsType?.array.repr
+                            : null) ||
+                          (prop.tsType?.array.keyword
+                            ? prop.tsType?.keyword
+                            : null) ||
+                          prop.tsType?.union
+                            ?.map((t) => {
+                              if (t.array) {
+                                return `${
+                                  `${t.array?.repr}[]` ||
+                                  `${t.array?.keyword}[]` ||
+                                  'unknown[]'
+                                }`
+                              }
+                              return `${t.repr || t.keyword || 'unknown'}`
+                            })
+                            .join(' | ') ||
+                          prop.tsType?.typeRef?.typeName ||
+                          'unknown'
+                        }`
+                    )}) => `
+                  : `${
+                      (prop.tsType?.array.repr
+                        ? prop.tsType?.array.repr
+                        : null) ||
+                      (prop.tsType?.array.keyword
+                        ? prop.tsType?.keyword
+                        : null) ||
+                      prop.tsType?.union
+                        ?.map((t) => {
+                          if (t.array) {
+                            return `${
+                              `${t.array?.repr}[]` ||
+                              `${t.array?.keyword}[]` ||
+                              'unknown[]'
+                            }`
+                          }
+                          return `${t.repr || t.keyword || 'unknown'}`
+                        })
+                        .join(' | ')
+                    }`
               }${prop.jsDoc != null ? ` - ${prop.jsDoc}` : ''}`
           )
           .join('\n')
@@ -143,10 +182,20 @@ export default class GetDocCommand extends Command {
           .map(
             (prop) =>
               `• **${prop.name}${prop.optional ? '?' : ''}:** ${
-                prop.tsType?.repr ||
-                prop.tsType?.keyword ||
+                (prop.tsType?.array.repr ? prop.tsType?.array.repr : null) ||
+                (prop.tsType?.array.keyword ? prop.tsType?.keyword : null) ||
                 prop.tsType?.union
-                  ?.map((t) => t.repr || t.keyword)
+                  ?.map((t) => {
+                    if (t.array) {
+                      return `${
+                        `${t.array?.repr}[]` ||
+                        `${t.array?.keyword}[]` ||
+                        'unknown[]'
+                      }
+                        `
+                    }
+                    return `${t.repr || t.keyword || 'unknown'}`
+                  })
                   .join(' | ') ||
                 prop.tsType?.typeRef?.typeName ||
                 'unknown'
@@ -183,9 +232,8 @@ export default class GetDocCommand extends Command {
           embed.addField('Methods', proptxt.substring(0, 1000))
         }
       }
-
     }
-    
+
     ctx.channel.send(embed)
   }
 }
